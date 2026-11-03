@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react';
+import { AssignmentContext } from '../context/AssignmentContext';
 
 import '../App.css'
 
@@ -32,7 +33,13 @@ import AssignmentList from "../components/AssignmentList";
 
 
 function Dashboard() {
-  const [assignments, setAssignments] = useState([]);
+  const {
+  assignments,
+  addAssignment,
+  deleteAssignment,
+  toggleStatus,
+  updateAssignment,
+} = useContext(AssignmentContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -64,31 +71,9 @@ function Dashboard() {
   });
 
 
-  function toggleStatus(id) {
-    setAssignments((prevAssignments) =>
-      prevAssignments.map((assignment) =>
-        assignment.id === id
-          ? {
-            ...assignment,
-            status: assignment.status === "completed" ? "pending" : "completed"
-          } :
-          assignment
-      ))
-  }
+ 
 
-  function addAssignment(newAssignment) {
-    setAssignments((previousAssignments) => [
-      ...previousAssignments,
-      newAssignment,
-    ]);
-  }
-  function deleteAssignment(id) {
-    setAssignments((prevAssignments) =>
-      prevAssignments.filter(
-        (assignment) => assignment.id !== id
-      )
-    );
-  }
+
 
   function startEditing(id) {
     const selectedAssignment = assignments.find(
@@ -97,17 +82,14 @@ function Dashboard() {
     setEditingAssignment(selectedAssignment);
   }
 
-  function updateAssignment(updatedAssignment) {
-    setAssignments((prevAssignments) =>
-      prevAssignments.map((assignment) =>
-        assignment.id === updatedAssignment.id ? updatedAssignment : assignment
-      )
-    );
-    setEditingAssignment(null);
-  }
+  
   function cancelEditing() {
     setEditingAssignment(null);
   }
+  function handleUpdateAssignment(updatedAssignment) {
+  updateAssignment(updatedAssignment);
+  setEditingAssignment(null);
+}
   const filteredAssignments = assignments.filter((assignment) => {
     const matchesSearch = assignment.title.toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -120,155 +102,155 @@ function Dashboard() {
     (a, b) => new Date(a.due_date) - new Date(b.due_date)
   );
   return (
-  <div className="space-y-8">
+    <div className="space-y-8">
 
-    {/* Dashboard heading */}
-    <header>
-      <p className="text-sm font-medium text-indigo-600">
-        STUDENT WORKSPACE
-      </p>
-
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-        Welcome back!
-      </h1>
-
-      <p className="mt-2 text-slate-500">
-        Here's an overview of your academic progress.
-      </p>
-    </header>
-
-    {/* Statistics */}
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">Total Assignments</p>
-        <p className="mt-2 text-3xl font-bold text-slate-900">
-          {stats.total}
+      {/* Dashboard heading */}
+      <header>
+        <p className="text-sm font-medium text-indigo-600">
+          STUDENT WORKSPACE
         </p>
-      </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">Pending</p>
-        <p className="mt-2 text-3xl font-bold text-amber-600">
-          {stats.pending}
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+          Welcome back!
+        </h1>
+
+        <p className="mt-2 text-slate-500">
+          Here's an overview of your academic progress.
         </p>
-      </div>
+      </header>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">Completed</p>
-        <p className="mt-2 text-3xl font-bold text-emerald-600">
-          {stats.completed}
-        </p>
-      </div>
+      {/* Statistics */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">High Priority</p>
-        <p className="mt-2 text-3xl font-bold text-rose-600">
-          {stats.high}
-        </p>
-      </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Total Assignments</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {stats.total}
+          </p>
+        </div>
 
-    </section>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-amber-600">
+            {stats.pending}
+          </p>
+        </div>
 
-   {/* Assignment management */}
-<section className="space-y-5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Completed</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-600">
+            {stats.completed}
+          </p>
+        </div>
 
-  {/* Section heading */}
-  <div>
-    <h2 className="text-xl font-bold text-slate-900">
-      My Assignments
-    </h2>
-    <p className="mt-1 text-sm text-slate-500">
-      Keep track of your tasks and upcoming deadlines.
-    </p>
-  </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">High Priority</p>
+          <p className="mt-2 text-3xl font-bold text-rose-600">
+            {stats.high}
+          </p>
+        </div>
 
-  {/* Search and filters */}
-  <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row">
+      </section>
 
-    <input
-      type="text"
-      placeholder="Search assignments..."
-      value={searchTerm}
-      onChange={(event) => setSearchTerm(event.target.value)}
-      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-    />
+      {/* Assignment management */}
+      <section className="space-y-5">
 
-    <select
-      value={priorityFilter}
-      onChange={(event) => setPriorityFilter(event.target.value)}
-      className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
-    >
-      <option value="all">All Priorities</option>
-      <option value="low">Low Priority</option>
-      <option value="medium">Medium Priority</option>
-      <option value="high">High Priority</option>
-    </select>
+        {/* Section heading */}
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">
+            My Assignments
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Keep track of your tasks and upcoming deadlines.
+          </p>
+        </div>
 
-    <select
-      value={statusFilter}
-      onChange={(event) => setStatusFilter(event.target.value)}
-      className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
-    >
-      <option value="all">All Statuses</option>
-      <option value="pending">Pending</option>
-      <option value="completed">Completed</option>
-    </select>
+        {/* Search and filters */}
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row">
 
-  </div>
+          <input
+            type="text"
+            placeholder="Search assignments..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
 
-  {/* Assignment list or empty states */}
-  {assignments.length === 0 ? (
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+          >
+            <option value="all">All Priorities</option>
+            <option value="low">Low Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="high">High Priority</option>
+          </select>
 
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-      <h3 className="text-lg font-semibold text-slate-900">
-        No assignments yet
-      </h3>
-      <p className="mt-2 text-sm text-slate-500">
-        Create your first assignment to get started.
-      </p>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+
+        </div>
+
+        {/* Assignment list or empty states */}
+        {assignments.length === 0 ? (
+
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+            <h3 className="text-lg font-semibold text-slate-900">
+              No assignments yet
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Create your first assignment to get started.
+            </p>
+          </div>
+
+        ) : filteredAssignments.length === 0 ? (
+
+          <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
+            <h3 className="font-semibold text-slate-800">
+              No matching assignments
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Try changing your search or filters.
+            </p>
+          </div>
+
+        ) : (
+
+          <AssignmentList
+            assignments={sortedAssignments}
+            onToggleStatus={toggleStatus}
+            onDelete={deleteAssignment}
+            onEdit={startEditing}
+          />
+
+        )}
+
+      </section>
+
+      {/* Assignment creation and editing form */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-lg font-bold text-slate-900">
+          {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+        </h2>
+
+        <AssignmentForm
+          onAddAssignment={addAssignment}
+          editingAssignment={editingAssignment}
+          onUpdateAssignment={handleUpdateAssignment}
+          onCancelEdit={cancelEditing}
+        />
+      </section>
+
     </div>
-
-  ) : filteredAssignments.length === 0 ? (
-
-    <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
-      <h3 className="font-semibold text-slate-800">
-        No matching assignments
-      </h3>
-      <p className="mt-2 text-sm text-slate-500">
-        Try changing your search or filters.
-      </p>
-    </div>
-
-  ) : (
-
-    <AssignmentList
-      assignments={sortedAssignments}
-      onToggleStatus={toggleStatus}
-      onDelete={deleteAssignment}
-      onEdit={startEditing}
-    />
-
-  )}
-
-</section>
-
-{/* Assignment creation and editing form */}
-<section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-  <h2 className="mb-5 text-lg font-bold text-slate-900">
-    {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
-  </h2>
-
-  <AssignmentForm
-    onAddAssignment={addAssignment}
-    editingAssignment={editingAssignment}
-    onUpdateAssignment={updateAssignment}
-    onCancelEdit={cancelEditing}
-  />
-</section>
-
-  </div>
-);
+  );
 }
 
 
