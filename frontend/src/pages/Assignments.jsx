@@ -1,13 +1,160 @@
-function Assignments() {
-  return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold text-blue-600">
-        My Assignments
-      </h1>
 
-      <p className="mt-4 text-gray-600">
-        Manage all your assignments here.
-      </p>
+import { useState, useContext } from "react";
+
+import { AssignmentContext } from "../context/AssignmentContext";
+import AssignmentList from "../components/AssignmentList";
+import AssignmentForm from "../components/AssignmentForm";
+import useAssignmentManagement from "../hooks/useAssignmentManagement";
+
+function Assignments() {
+
+
+
+  // Page-specific UI state
+  const {
+   assignments,
+        addAssignment,
+        deleteAssignment,
+        toggleStatus,
+        updateAssignment,
+
+        searchTerm,
+        setSearchTerm,
+        priorityFilter,
+        setPriorityFilter,
+        statusFilter,
+        setStatusFilter,
+        editingAssignment,
+        setEditingAssignment,
+
+        startEditing,
+        cancelEditing,
+        handleUpdateAssignment,
+  } = useAssignmentManagement();
+  // Find the assignment we want to edit
+ 
+
+  // Search and filter assignments
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesSearch = assignment.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    const matchesPriority =
+      priorityFilter === "all" ||
+      assignment.priority === priorityFilter;
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      assignment.status === statusFilter;
+
+    return matchesSearch && matchesPriority && matchesStatus;
+  });
+
+  // Sort by due date
+  const sortedAssignments = [...filteredAssignments].sort((a, b) => {
+    if (!a.due_date) return 1;
+    if (!b.due_date) return -1;
+
+    return new Date(a.due_date) - new Date(b.due_date);
+  });
+
+  return (
+    <div className="space-y-8">
+
+      {/* Page heading */}
+      <header>
+        <p className="text-sm font-medium text-indigo-600">
+          TASK MANAGEMENT
+        </p>
+
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          My Assignments
+        </h1>
+
+        <p className="mt-2 text-slate-500">
+          Manage all your academic tasks and deadlines in one place.
+        </p>
+      </header>
+
+      {/* Search and filters */}
+      <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row">
+
+        <input
+          type="text"
+          placeholder="Search assignments..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        />
+
+        <select
+          value={priorityFilter}
+          onChange={(event) => setPriorityFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+        >
+          <option value="all">All Priorities</option>
+          <option value="low">Low Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="high">High Priority</option>
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+        >
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+
+      </section>
+
+      {/* Assignment list and empty states */}
+      <section>
+        {assignments.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+            <h2 className="text-lg font-semibold text-slate-900">
+              No assignments yet
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Create your first assignment below.
+            </p>
+          </div>
+        ) : filteredAssignments.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
+            <h2 className="font-semibold text-slate-800">
+              No matching assignments
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Try changing your search or filters.
+            </p>
+          </div>
+        ) : (
+          <AssignmentList
+            assignments={sortedAssignments}
+            onToggleStatus={toggleStatus}
+            onDelete={deleteAssignment}
+            onEdit={startEditing}
+          />
+        )}
+      </section>
+
+      {/* Create and edit form */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-lg font-bold text-slate-900">
+          {editingAssignment ? "Edit Assignment" : "Create New Assignment"}
+        </h2>
+
+        <AssignmentForm
+          onAddAssignment={addAssignment}
+          editingAssignment={editingAssignment}
+          onUpdateAssignment={handleUpdateAssignment}
+          onCancelEdit={cancelEditing}
+        />
+      </section>
+
     </div>
   );
 }

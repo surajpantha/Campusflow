@@ -2,7 +2,7 @@ import AssignmentCard from "./AssignmentCard";
 
 function AssignmentList({ assignments, onToggleStatus, onDelete, onEdit }) {
   return (
-    <div>
+    <div className="grid grid-cols-1 gap-4">
       {assignments.map((assignment) => (
         <AssignmentCard
           key={assignment.id}

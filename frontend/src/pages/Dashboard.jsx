@@ -5,45 +5,37 @@ import '../App.css'
 
 import AssignmentForm from "../components/AssignmentForm";
 import AssignmentList from "../components/AssignmentList";
+import DashboardStats from '../components/DashboardStats';
+import useAssignmentManagement from "../hooks/useAssignmentManagement";
 
 
-// Both approaches work.
 
-// For now, understand that:
-// - props is an object containing the values passed by the parent.
-// - { title, description, priority } extracts those properties from that object.
-
-// function AssignmentCard(props){
-//   return (
-//     <div>
-//       <h2>
-//         {props.title}
-//       </h2>
-//       <p>
-//         {props.description}
-//       </p>
-//       <p>
-//         Priority: {props.priority}
-//       </p>
-//     </div>
-//   )
-// }
 
 
 
 
 function Dashboard() {
+
   const {
-  assignments,
-  addAssignment,
-  deleteAssignment,
-  toggleStatus,
-  updateAssignment,
-} = useContext(AssignmentContext);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [editingAssignment, setEditingAssignment] = useState(null);
+    assignments,
+        addAssignment,
+        deleteAssignment,
+        toggleStatus,
+        updateAssignment,
+
+        searchTerm,
+        setSearchTerm,
+        priorityFilter,
+        setPriorityFilter,
+        statusFilter,
+        setStatusFilter,
+        editingAssignment,
+        setEditingAssignment,
+
+        startEditing,
+        cancelEditing,
+        handleUpdateAssignment,
+  } = useAssignmentManagement();
 
   const stats = assignments.reduce((acc, assignment) => {
     acc.total += 1;
@@ -71,25 +63,6 @@ function Dashboard() {
   });
 
 
- 
-
-
-
-  function startEditing(id) {
-    const selectedAssignment = assignments.find(
-      (assignment) => assignment.id === id
-    );
-    setEditingAssignment(selectedAssignment);
-  }
-
-  
-  function cancelEditing() {
-    setEditingAssignment(null);
-  }
-  function handleUpdateAssignment(updatedAssignment) {
-  updateAssignment(updatedAssignment);
-  setEditingAssignment(null);
-}
   const filteredAssignments = assignments.filter((assignment) => {
     const matchesSearch = assignment.title.toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -101,6 +74,7 @@ function Dashboard() {
   const sortedAssignments = [...filteredAssignments].sort(
     (a, b) => new Date(a.due_date) - new Date(b.due_date)
   );
+  
   return (
     <div className="space-y-8">
 
@@ -120,37 +94,7 @@ function Dashboard() {
       </header>
 
       {/* Statistics */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Total Assignments</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {stats.total}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Pending</p>
-          <p className="mt-2 text-3xl font-bold text-amber-600">
-            {stats.pending}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Completed</p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">
-            {stats.completed}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">High Priority</p>
-          <p className="mt-2 text-3xl font-bold text-rose-600">
-            {stats.high}
-          </p>
-        </div>
-
-      </section>
+      <DashboardStats stats={stats} />
 
       {/* Assignment management */}
       <section className="space-y-5">
