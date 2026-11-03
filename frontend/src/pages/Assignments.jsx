@@ -16,7 +16,7 @@ function Assignments() {
         addAssignment,
         deleteAssignment,
         toggleStatus,
-        updateAssignment,
+       
 
         searchTerm,
         setSearchTerm,
@@ -25,39 +25,17 @@ function Assignments() {
         statusFilter,
         setStatusFilter,
         editingAssignment,
-        setEditingAssignment,
+        
 
         startEditing,
         cancelEditing,
         handleUpdateAssignment,
+        sortedAssignments
   } = useAssignmentManagement();
-  // Find the assignment we want to edit
+ 
  
 
-  // Search and filter assignments
-  const filteredAssignments = assignments.filter((assignment) => {
-    const matchesSearch = assignment.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    const matchesPriority =
-      priorityFilter === "all" ||
-      assignment.priority === priorityFilter;
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      assignment.status === statusFilter;
-
-    return matchesSearch && matchesPriority && matchesStatus;
-  });
-
-  // Sort by due date
-  const sortedAssignments = [...filteredAssignments].sort((a, b) => {
-    if (!a.due_date) return 1;
-    if (!b.due_date) return -1;
-
-    return new Date(a.due_date) - new Date(b.due_date);
-  });
+  
 
   return (
     <div className="space-y-8">
@@ -122,7 +100,7 @@ function Assignments() {
               Create your first assignment below.
             </p>
           </div>
-        ) : filteredAssignments.length === 0 ? (
+        ) : sortedAssignments.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
             <h2 className="font-semibold text-slate-800">
               No matching assignments

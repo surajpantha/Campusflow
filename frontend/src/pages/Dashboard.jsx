@@ -18,23 +18,24 @@ function Dashboard() {
 
   const {
     assignments,
-        addAssignment,
-        deleteAssignment,
-        toggleStatus,
-        updateAssignment,
+    addAssignment,
+    deleteAssignment,
+    toggleStatus,
+   
 
-        searchTerm,
-        setSearchTerm,
-        priorityFilter,
-        setPriorityFilter,
-        statusFilter,
-        setStatusFilter,
-        editingAssignment,
-        setEditingAssignment,
+    searchTerm,
+    setSearchTerm,
+    priorityFilter,
+    setPriorityFilter,
+    statusFilter,
+    setStatusFilter,
+    editingAssignment,
+    
 
-        startEditing,
-        cancelEditing,
-        handleUpdateAssignment,
+    startEditing,
+    cancelEditing,
+    handleUpdateAssignment,
+    sortedAssignments,
   } = useAssignmentManagement();
 
   const stats = assignments.reduce((acc, assignment) => {
@@ -63,18 +64,8 @@ function Dashboard() {
   });
 
 
-  const filteredAssignments = assignments.filter((assignment) => {
-    const matchesSearch = assignment.title.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesPriority = priorityFilter === 'all' || assignment.priority === priorityFilter;
-    const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
-    return matchesSearch && matchesPriority && matchesStatus;
-  });
-
-  const sortedAssignments = [...filteredAssignments].sort(
-    (a, b) => new Date(a.due_date) - new Date(b.due_date)
-  );
   
+
   return (
     <div className="space-y-8">
 
@@ -155,7 +146,7 @@ function Dashboard() {
             </p>
           </div>
 
-        ) : filteredAssignments.length === 0 ? (
+        ) : sortedAssignments.length === 0 ? (
 
           <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
             <h3 className="font-semibold text-slate-800">

@@ -12,12 +12,13 @@ function useAssignmentManagement() {
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
     const [editingAssignment, setEditingAssignment] = useState(null);
-   
-   
+
+
     function startEditing(id) {
         const selectedAssignment = assignments.find(
             (assignment) => assignment.id === id
         );
+        if(!selectedAssignment) return;
 
         setEditingAssignment(selectedAssignment);
     }
@@ -32,13 +33,35 @@ function useAssignmentManagement() {
         updateAssignment(updatedAssignment);
         setEditingAssignment(null);
     }
+    const filteredAssignments = assignments.filter((assignment) => {
+        const matchesSearch = assignment.title
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
 
+        const matchesPriority =
+            priorityFilter === "all" ||
+            assignment.priority === priorityFilter;
+
+        const matchesStatus =
+            statusFilter === "all" ||
+            assignment.status === statusFilter;
+
+        return matchesSearch && matchesPriority && matchesStatus;
+    });
+
+    // Sort by due date
+    const sortedAssignments = [...filteredAssignments].sort((a, b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+
+        return new Date(a.due_date) - new Date(b.due_date);
+    });
     return {
         assignments,
         addAssignment,
         deleteAssignment,
         toggleStatus,
-        updateAssignment,
+        
 
         searchTerm,
         setSearchTerm,
@@ -47,11 +70,13 @@ function useAssignmentManagement() {
         statusFilter,
         setStatusFilter,
         editingAssignment,
-        setEditingAssignment,
+      
 
         startEditing,
         cancelEditing,
         handleUpdateAssignment,
+
+        sortedAssignments,
     };
 
 }
