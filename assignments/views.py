@@ -2,13 +2,14 @@
 from rest_framework import viewsets,permissions
 from .models import Assignment
 from .serializers import AssignmentSerializer
+from accounts.permissions import IsStudent
 
 
 # Create your views here.
 class AssignmentViewSet(viewsets.ModelViewSet):
 
     serializer_class=AssignmentSerializer
-    permission_classes=[permissions.IsAuthenticated]
+    permission_classes=[IsStudent]
 
     def get_queryset(self):
         return Assignment.objects.filter(

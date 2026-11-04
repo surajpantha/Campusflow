@@ -25,6 +25,17 @@ class CampusFlowUserManager(UserManager):
 
 
 class User(AbstractUser):
-    email=models.EmailField(unique=True)
 
-    objects=CampusFlowUserManager()
+    class Role(models.TextChoices):
+        STUDENT = "student", "Student"
+        TEACHER = "teacher", "Teacher"
+
+    email = models.EmailField(unique=True)
+
+    role = models.CharField(
+        max_length=10,
+        choices=Role.choices,
+        default=Role.STUDENT
+    )
+
+    objects = CampusFlowUserManager()

@@ -16,10 +16,12 @@ class AssignmentAPITestCase(APITestCase):
     def setUp(self):
         self.student_a=User.objects.create_user(
             username="student_a",
+             email="student_a@example.com",
             password="passowrd123",
             )
         self.student_b=User.objects.create_user(
             username="student_b",
+            email="student_b@example.com",
             password="password234",
 
         )
@@ -64,6 +66,11 @@ class AssignmentAPITestCase(APITestCase):
             self.assignment_a.id,
             returned_ids,
         )
+        self.assertNotIn(
+            self.assignment_b.id,
+            returned_ids,
+        )
+        
     def test_user_cannot_retrieve_another_users_assignment(self):
             self.client.force_authenticate(
                 user=self.student_a
@@ -158,4 +165,23 @@ class AssignmentAPITestCase(APITestCase):
             Assignment.objects.filter(
                 id=self.assignment_b.id
             ).exists()
+        )
+
+    def test_teacher_cannot_access_personal_assignments(self):
+        teacher = User.objects.create_user(
+            username="teacher_a",
+            email="teacher_a@example.com",
+            password="teacherpassword123",
+        )
+
+        teacher.role = User.Role.TEACHER
+        teacher.save()
+
+        self.client.force_authenticate(user=teacher)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
         )
