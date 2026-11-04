@@ -17,5 +17,5 @@ class AssignmentViewSet(viewsets.ModelViewSet):
 
 
     def perform_create(self,serializer):
-        print("perform_create called")
+      
         serializer.save(owner=self.request.user)
