@@ -1,42 +1,149 @@
-import { createContext, useState } from "react";
+
+import { createContext, useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 export const AssignmentContext = createContext();
 
 export function AssignmentProvider({ children }) {
-    const [assignments, setAssignments] = useState([]);
+    const { user, loading: authLoading } = useAuth();
 
-    function addAssignment(newAssignment) {
-        setAssignments((previousAssignments) => [
-            ...previousAssignments,
-            newAssignment,
-        ]);
+    const [assignments, setAssignments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch assignments when an authenticated student is available.
+    useEffect(() => {
+        let isActive = true;
+
+        async function fetchAssignments() {
+            if (authLoading) return;
+
+            if (!user) {
+                setAssignments([]);
+                setLoading(false);
+                setError(null);
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const data = await api.get('/assignments/');
+
+                if (isActive) {
+                    setAssignments(data);
+                }
+            } catch (err) {
+                if (isActive) {
+                    setError(err.message);
+                    setAssignments([]);
+                }
+            } finally {
+                if (isActive) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        fetchAssignments();
+
+        return () => {
+            isActive = false;
+        };
+    }, [user, authLoading]);
+
+    // Create an assignment.
+    async function addAssignment(newAssignment) {
+        try {
+            const createdAssignment = await api.post(
+                '/assignments/',
+                newAssignment
+            );
+
+            setAssignments((previous) => [
+                ...previous,
+                createdAssignment,
+            ]);
+
+            setError(null);
+            return createdAssignment;
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
     }
-    function deleteAssignment(id) {
-        setAssignments((prevAssignments) =>
-            prevAssignments.filter(
-                (assignment) => assignment.id !== id
-            )
+
+    // Delete an assignment.
+    async function deleteAssignment(id) {
+        try {
+            await api.delete(`/assignments/${id}/`);
+
+            setAssignments((previous) =>
+                previous.filter((assignment) => assignment.id !== id)
+            );
+
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }
+
+    // Toggle between pending and completed.
+    async function toggleStatus(id) {
+        const assignment = assignments.find(
+            (item) => item.id === id
         );
+
+        if (!assignment) return;
+
+        const newStatus =
+            assignment.status === 'completed' ? 'pending' : 'completed';
+
+        try {
+            const updatedAssignment = await api.patch(
+                `/assignments/${id}/`,
+                { status: newStatus }
+            );
+
+            setAssignments((previous) =>
+                previous.map((item) =>
+                    item.id === id ? updatedAssignment : item
+                )
+            );
+
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
     }
-    function toggleStatus(id) {
-        setAssignments((prevAssignments) =>
-            prevAssignments.map((assignment) =>
-                assignment.id === id
-                    ? {
-                        ...assignment,
-                        status: assignment.status === "completed" ? "pending" : "completed"
-                    } :
-                    assignment
-            ));
-    }
-    function updateAssignment(updatedAssignment) {
-        setAssignments((prevAssignments) =>
-            prevAssignments.map((assignment) =>
-                assignment.id === updatedAssignment.id
-                    ? updatedAssignment
-                    : assignment
-            )
-        );
+
+    // Update an existing assignment.
+    async function updateAssignment(updatedAssignment) {
+        const { id, title, description, due_date, priority, status } =
+            updatedAssignment;
+
+        try {
+            const savedAssignment = await api.patch(
+                `/assignments/${id}/`,
+                { title, description, due_date, priority, status }
+            );
+
+            setAssignments((previous) =>
+                previous.map((item) =>
+                    item.id === id ? savedAssignment : item
+                )
+            );
+
+            setError(null);
+            return savedAssignment;
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
     }
 
     return (
@@ -47,6 +154,8 @@ export function AssignmentProvider({ children }) {
                 deleteAssignment,
                 toggleStatus,
                 updateAssignment,
+                loading,
+                error,
             }}
         >
             {children}

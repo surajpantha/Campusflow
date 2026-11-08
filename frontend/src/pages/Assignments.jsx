@@ -1,7 +1,4 @@
 
-import { useState, useContext } from "react";
-
-import { AssignmentContext } from "../context/AssignmentContext";
 import AssignmentList from "../components/AssignmentList";
 import AssignmentForm from "../components/AssignmentForm";
 import useAssignmentManagement from "../hooks/useAssignmentManagement";
@@ -16,7 +13,8 @@ function Assignments() {
         addAssignment,
         deleteAssignment,
         toggleStatus,
-       
+       loading,
+       error,
 
         searchTerm,
         setSearchTerm,
@@ -35,7 +33,21 @@ function Assignments() {
  
  
 
-  
+  async function handleToggleStatus(id) {
+    try {
+        await toggleStatus(id);
+    } catch {
+        // The context already stores the error for display.
+    }
+}
+
+async function handleDeleteAssignment(id) {
+    try {
+        await deleteAssignment(id);
+    } catch {
+        // The context already stores the error for display.
+    }
+}
 
   return (
     <div className="space-y-8">
@@ -90,34 +102,44 @@ function Assignments() {
       </section>
 
       {/* Assignment list and empty states */}
-      <section>
-        {assignments.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+     <section>
+    {loading ? (
+        <p className="py-10 text-center text-slate-500">
+            Loading your assignments...
+        </p>
+    ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+            <p className="font-medium text-red-700">
+                {error}
+            </p>
+        </div>
+    ) : assignments.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
             <h2 className="text-lg font-semibold text-slate-900">
-              No assignments yet
+                No assignments yet
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Create your first assignment below.
+                Create your first assignment below.
             </p>
-          </div>
-        ) : sortedAssignments.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
+        </div>
+    ) : sortedAssignments.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
             <h2 className="font-semibold text-slate-800">
-              No matching assignments
+                No matching assignments
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Try changing your search or filters.
+                Try changing your search or filters.
             </p>
-          </div>
-        ) : (
-          <AssignmentList
+        </div>
+    ) : (
+        <AssignmentList
             assignments={sortedAssignments}
-            onToggleStatus={toggleStatus}
-            onDelete={deleteAssignment}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteAssignment}
             onEdit={startEditing}
-          />
-        )}
-      </section>
+        />
+    )}
+</section>
 
       {/* Create and edit form */}
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

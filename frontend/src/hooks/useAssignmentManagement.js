@@ -1,13 +1,15 @@
 import { useState, useContext } from "react";
 import { AssignmentContext } from "../context/AssignmentContext";
 function useAssignmentManagement() {
-    const {
-        assignments,
-        addAssignment,
-        deleteAssignment,
-        toggleStatus,
-        updateAssignment
-    } = useContext(AssignmentContext);
+  const {
+    assignments,
+    addAssignment,
+    deleteAssignment,
+    toggleStatus,
+    updateAssignment,
+    loading,
+    error,
+} = useContext(AssignmentContext);
     const [searchTerm, setSearchTerm] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -29,10 +31,10 @@ function useAssignmentManagement() {
     }
 
     // Update shared data and exit editing mode
-    function handleUpdateAssignment(updatedAssignment) {
-        updateAssignment(updatedAssignment);
-        setEditingAssignment(null);
-    }
+   async function handleUpdateAssignment(updatedAssignment) {
+    await updateAssignment(updatedAssignment);
+    setEditingAssignment(null);
+}
     const filteredAssignments = assignments.filter((assignment) => {
         const matchesSearch = assignment.title
             .toLowerCase()
@@ -77,6 +79,9 @@ function useAssignmentManagement() {
         handleUpdateAssignment,
 
         sortedAssignments,
+        loading,
+        error,
+        
     };
 
 }

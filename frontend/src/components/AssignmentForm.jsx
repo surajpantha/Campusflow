@@ -26,42 +26,46 @@ function AssignmentForm({
     }
   }, [editingAssignment]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    if (title.trim() === "") {
-      alert("Please enter an assignment title");
+    if (title.trim() === '') {
+      alert('Please enter an assignment title');
       return;
     }
 
-    if (editingAssignment) {
-      const updatedAssignment = {
-        ...editingAssignment,
-        title: title.trim(),
-        description,
-        priority,
-        due_date: dueDate,
-      };
+    try {
+      if (editingAssignment) {
+        const updatedAssignment = {
+          ...editingAssignment,
+          title: title.trim(),
+          description,
+          priority,
+          due_date: dueDate,
+        };
 
-      onUpdateAssignment(updatedAssignment);
-    } else {
-      const newAssignment = {
-        id: Date.now(),
-        title: title.trim(),
-        description,
-        priority,
-        due_date: dueDate,
-        status: "pending",
-      };
+        await onUpdateAssignment(updatedAssignment);
+      } else {
+        const newAssignment = {
+          title: title.trim(),
+          description,
+          priority,
+          due_date: dueDate,
+          status: 'pending',
+        };
 
-      onAddAssignment(newAssignment);
+        await onAddAssignment(newAssignment);
 
-      setTitle("");
-      setDescription("");
-      setPriority("medium");
-      setDueDate("");
+        setTitle('');
+        setDescription('');
+        setPriority('medium');
+        setDueDate('');
+      }
+    } catch (error) {
+      alert(error.message || 'Could not save assignment.');
     }
   }
+
 
   const inputStyles =
     "w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
@@ -143,6 +147,7 @@ function AssignmentForm({
             type="date"
             value={dueDate}
             onChange={(event) => setDueDate(event.target.value)}
+            required
             className={inputStyles}
           />
         </div>
