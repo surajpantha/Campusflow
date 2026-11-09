@@ -55,26 +55,41 @@ export function AuthProvider({ children }) {
   }
 
   // Restore the session when React starts
-  useEffect(() => {
-    async function restoreSession() {
-      if (!getAccessToken() && !getRefreshToken()) {
-        setLoading(false);
-        return;
-      }
+useEffect(() => {
+    let isActive = true;
 
-      try {
-        const currentUser = await api.get('/accounts/me/');
-        setUser(currentUser);
-      } catch (error) {
-        clearTokens();
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    async function restoreSession() {
+        if (!getAccessToken() && !getRefreshToken()) {
+            if (isActive) {
+                setLoading(false);
+            }
+            return;
+        }
+
+        try {
+            const currentUser = await api.get('/accounts/me/');
+
+            if (isActive) {
+                setUser(currentUser);
+            }
+        } catch  {
+            if (isActive) {
+                clearTokens();
+                setUser(null);
+            }
+        } finally {
+            if (isActive) {
+                setLoading(false);
+            }
+        }
     }
 
     restoreSession();
-  }, []);
+
+    return () => {
+        isActive = false;
+    };
+}, []);
 
   const value = {
     user,

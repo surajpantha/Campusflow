@@ -25,33 +25,54 @@ export function clearTokens() {
 
 }
 
-// refresh the access token
-async function refreshAccessToken() {
+// Shared Promise: prevents multiple simultaneous refresh requests.
+let refreshPromise = null;
+
+// Performs the actual refresh request.
+async function performRefresh() {
     const refresh = getRefreshToken();
 
     if (!refresh) {
         clearTokens();
         return false;
     }
+
     try {
-        const response = await fetch(`${API_BASE_URL}/accounts/refresh`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refresh }),
-        });
+        const response = await fetch(
+            `${API_BASE_URL}/accounts/refresh/`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh }),
+            }
+        );
+
         if (!response.ok) {
             clearTokens();
             return false;
         }
+
         const data = await response.json();
-        //SimpleJWT rotates the refresh token when configured
+
         saveTokens(data.access, data.refresh || refresh);
+
         return true;
     } catch {
-        return false
+        return false;
     }
+}
+
+// All callers share the same refresh operation.
+function refreshAccessToken() {
+    if (!refreshPromise) {
+        refreshPromise = performRefresh().finally(() => {
+            refreshPromise = null;
+        });
+    }
+
+    return refreshPromise;
 }
 
 // Central API request function

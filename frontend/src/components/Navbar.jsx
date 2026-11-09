@@ -1,54 +1,63 @@
 import { NavLink } from 'react-router';
 import {
-  LayoutDashboard,
-  ClipboardList,
-  CalendarDays,
-  BookOpen,
-  Settings,
+    LayoutDashboard,
+    ClipboardList,
 } from 'lucide-react';
 
-function Navbar() {
-  const linkClasses = ({ isActive }) =>
-    `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-      isActive
-        ? 'bg-indigo-600 text-white shadow-md'
-        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-    }`;
+const navigationByRole = {
+    student: [
+        {
+            label: 'Dashboard',
+            path: '/',
+            icon: LayoutDashboard,
+            end: true,
+        },
+        {
+            label: 'Assignments',
+            path: '/assignments',
+            icon: ClipboardList,
+        },
+    ],
 
-  return (
-    <nav className="flex flex-col gap-2">
+    teacher: [
+        {
+            label: 'Dashboard',
+            path: '/teacher',
+            icon: LayoutDashboard,
+            end: true,
+        },
+    ],
+};
 
-      <NavLink to="/" end className={linkClasses}>
-        <LayoutDashboard size={20} />
-        <span>Dashboard</span>
-      </NavLink>
+function Navbar({ role }) {
+    const navigation = navigationByRole[role] || [];
 
-      <NavLink to="/assignments" className={linkClasses}>
-        <ClipboardList size={20} />
-        <span>Assignments</span>
-      </NavLink>
+    const linkClasses = ({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+            isActive
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        }`;
 
-      <NavLink to="/calendar" className={linkClasses}>
-        <CalendarDays size={20} />
-        <span>Calendar</span>
-      </NavLink>
+    return (
+        <nav className="flex flex-col gap-2">
+            {navigation.map((item) => {
+                const Icon = item.icon;
 
-      <NavLink to="/courses" className={linkClasses}>
-        <BookOpen size={20} />
-        <span>Courses</span>
-      </NavLink>
-
-      <div className="mt-8 mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-        Preferences
-      </div>
-
-      <NavLink to="/settings" className={linkClasses}>
-        <Settings size={20} />
-        <span>Settings</span>
-      </NavLink>
-
-    </nav>
-  );
+                return (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        end={item.end}
+                        className={linkClasses}
+                    >
+                        <Icon size={20} />
+                        <span>{item.label}</span>
+                    </NavLink>
+                );
+            })}
+        </nav>
+    );
 }
 
 export default Navbar;

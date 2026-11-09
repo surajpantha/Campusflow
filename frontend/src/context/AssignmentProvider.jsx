@@ -1,9 +1,7 @@
-
-import { createContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AssignmentContext } from './AssignmentContext';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
-
-export const AssignmentContext = createContext();
 
 export function AssignmentProvider({ children }) {
     const { user, loading: authLoading } = useAuth();
@@ -12,7 +10,6 @@ export function AssignmentProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Fetch assignments when an authenticated student is available.
     useEffect(() => {
         let isActive = true;
 
@@ -54,7 +51,6 @@ export function AssignmentProvider({ children }) {
         };
     }, [user, authLoading]);
 
-    // Create an assignment.
     async function addAssignment(newAssignment) {
         try {
             const createdAssignment = await api.post(
@@ -75,7 +71,6 @@ export function AssignmentProvider({ children }) {
         }
     }
 
-    // Delete an assignment.
     async function deleteAssignment(id) {
         try {
             await api.delete(`/assignments/${id}/`);
@@ -91,7 +86,6 @@ export function AssignmentProvider({ children }) {
         }
     }
 
-    // Toggle between pending and completed.
     async function toggleStatus(id) {
         const assignment = assignments.find(
             (item) => item.id === id
@@ -100,7 +94,9 @@ export function AssignmentProvider({ children }) {
         if (!assignment) return;
 
         const newStatus =
-            assignment.status === 'completed' ? 'pending' : 'completed';
+            assignment.status === 'completed'
+                ? 'pending'
+                : 'completed';
 
         try {
             const updatedAssignment = await api.patch(
@@ -121,10 +117,15 @@ export function AssignmentProvider({ children }) {
         }
     }
 
-    // Update an existing assignment.
     async function updateAssignment(updatedAssignment) {
-        const { id, title, description, due_date, priority, status } =
-            updatedAssignment;
+        const {
+            id,
+            title,
+            description,
+            due_date,
+            priority,
+            status,
+        } = updatedAssignment;
 
         try {
             const savedAssignment = await api.patch(

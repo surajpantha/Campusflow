@@ -1,4 +1,3 @@
-
 import { Routes, Route } from 'react-router';
 
 import Dashboard from './pages/Dashboard';
@@ -10,36 +9,57 @@ import TeacherDashboard from './pages/TeacherDashboard';
 
 import DashboardLayout from './layouts/Dashboardlayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import GuestRoute from './components/GuestRoute';
 
-import { AssignmentProvider } from './context/AssignmentContext';
+import { AssignmentProvider } from './context/AssignmentProvider';
 
 function App() {
-  return (
-    <AssignmentProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
+    return (
+        <Routes>
 
-        {/* Student routes */}
-        <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-          <Route path="/" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="assignments" element={<Assignments />} />
-          </Route>
-        </Route>
+            {/* Guest-only routes */}
+            <Route element={<GuestRoute />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+            </Route>
 
-        {/* Teacher routes */}
-        <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-          <Route
-            path="/teacher"
-            element={<TeacherDashboard />}
-          />
-        </Route>
-      </Routes>
-    </AssignmentProvider>
-  );
+            {/* Public route */}
+            <Route
+                path="/unauthorized"
+                element={<Unauthorized />}
+            />
+
+            {/* Student routes */}
+            <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+                <Route
+                    path="/"
+                    element={
+                        <AssignmentProvider>
+                            <DashboardLayout />
+                        </AssignmentProvider>
+                    }
+                >
+                    <Route index element={<Dashboard />} />
+
+                    <Route
+                        path="assignments"
+                        element={<Assignments />}
+                    />
+                </Route>
+            </Route>
+
+            {/* Teacher routes */}
+            <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                <Route
+                    path="/teacher"
+                    element={<DashboardLayout />}
+                >
+                    <Route index element={<TeacherDashboard />} />
+                </Route>
+            </Route>
+
+        </Routes>
+    );
 }
 
 export default App;

@@ -21,11 +21,9 @@ function Login() {
         try {
             const currentUser = await login(username, password);
 
-            if (currentUser.role === 'teacher') {
-                navigate('/teacher');
-            } else {
-                navigate('/');
-            }
+            const targetPath = currentUser.role === 'teacher' ? '/teacher' : '/';
+            navigate(targetPath, { replace: true });
+
         } catch (err) {
             setError(err.message || 'Login failed.PLease try again');
         } finally {
