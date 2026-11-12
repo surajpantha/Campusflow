@@ -1,175 +1,115 @@
 import { useState } from 'react';
 
-function AssignmentForm(props) {
-    const { editingAssignment } = props;
+function CourseForm(props) {
+    const { editingCourse } = props;
 
-    // A different key creates a fresh form state when the
-    // user switches between creating and editing assignments.
-    const formKey = editingAssignment
-        ? `edit-${editingAssignment.id}`
+    const formKey = editingCourse
+        ? `edit-${editingCourse.id}`
         : 'new';
 
-    return <AssignmentFormFields key={formKey} {...props} />;
+    return <CourseFormFields key={formKey} {...props} />;
 }
 
-function AssignmentFormFields({
-    onAddAssignment,
-    editingAssignment,
-    onUpdateAssignment,
+function CourseFormFields({
+    editingCourse,
+    onAddCourse,
+    onUpdateCourse,
     onCancelEdit,
 }) {
     const [title, setTitle] = useState(
-        () => editingAssignment?.title || ''
+        () => editingCourse?.title || ''
     );
     const [description, setDescription] = useState(
-        () => editingAssignment?.description || ''
+        () => editingCourse?.description || ''
     );
-    const [priority, setPriority] = useState(
-        () => editingAssignment?.priority || 'medium'
-    );
-    const [dueDate, setDueDate] = useState(
-        () => editingAssignment?.due_date || ''
-    );
+    const [submitting, setSubmitting] = useState(false);
 
     async function handleSubmit(event) {
         event.preventDefault();
 
-        if (title.trim() === '') {
-            alert('Please enter an assignment title');
-            return;
-        }
+        if (!title.trim()) return;
+
+        setSubmitting(true);
 
         try {
-            if (editingAssignment) {
-                const updatedAssignment = {
-                    ...editingAssignment,
-                    title: title.trim(),
-                    description,
-                    priority,
-                    due_date: dueDate,
-                };
+            const courseData = {
+                title: title.trim(),
+                description: description.trim(),
+            };
 
-                await onUpdateAssignment(updatedAssignment);
+            if (editingCourse) {
+                await onUpdateCourse(editingCourse.id, courseData);
             } else {
-                const newAssignment = {
-                    title: title.trim(),
-                    description,
-                    priority,
-                    due_date: dueDate,
-                    status: 'pending',
-                };
-
-                await onAddAssignment(newAssignment);
-
-                setTitle('');
-                setDescription('');
-                setPriority('medium');
-                setDueDate('');
+                await onAddCourse(courseData);
             }
-        } catch (error) {
-            alert(error.message || 'Could not save assignment.');
+
+            setTitle('');
+            setDescription('');
+        } catch (err) {
+            alert(err.message || 'Could not save course.');
+        } finally {
+            setSubmitting(false);
         }
     }
 
-    const inputStyles =
-        'w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100';
-
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-            {/* Title */}
+        <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <label
-                    htmlFor="assignment-title"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    htmlFor="course-title"
+                    className="mb-1 block text-sm font-medium text-slate-700"
                 >
-                    Assignment Title
+                    Course Title
                 </label>
 
                 <input
-                    id="assignment-title"
+                    id="course-title"
                     type="text"
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    placeholder="e.g. Database Management Assignment"
-                    className={inputStyles}
+                    placeholder="e.g. Introduction to Python"
+                    required
+                    maxLength={200}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
             </div>
 
-            {/* Description */}
             <div>
                 <label
-                    htmlFor="assignment-description"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    htmlFor="course-description"
+                    className="mb-1 block text-sm font-medium text-slate-700"
                 >
                     Description
                 </label>
 
                 <textarea
-                    id="assignment-description"
+                    id="course-description"
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Add some details about your assignment..."
+                    placeholder="Describe what students will learn..."
                     rows={4}
-                    className={`${inputStyles} resize-y`}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 />
             </div>
 
-            {/* Priority and Due Date */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div>
-                    <label
-                        htmlFor="assignment-priority"
-                        className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                        Priority
-                    </label>
-
-                    <select
-                        id="assignment-priority"
-                        value={priority}
-                        onChange={(event) => setPriority(event.target.value)}
-                        className={inputStyles}
-                    >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label
-                        htmlFor="assignment-due-date"
-                        className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                        Due Date
-                    </label>
-
-                    <input
-                        id="assignment-due-date"
-                        type="date"
-                        value={dueDate}
-                        onChange={(event) => setDueDate(event.target.value)}
-                        required
-                        className={inputStyles}
-                    />
-                </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap gap-3">
                 <button
                     type="submit"
-                    className="rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    disabled={submitting}
+                    className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
-                    {editingAssignment ? 'Save Changes' : 'Add Assignment'}
+                    {submitting
+                        ? 'Saving...'
+                        : editingCourse
+                            ? 'Save Changes'
+                            : 'Create Course'}
                 </button>
 
-                {editingAssignment && (
+                {editingCourse && (
                     <button
                         type="button"
                         onClick={onCancelEdit}
-                        className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+                        className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                         Cancel
                     </button>
@@ -179,4 +119,4 @@ function AssignmentFormFields({
     );
 }
 
-export default AssignmentForm;
+export default CourseForm;

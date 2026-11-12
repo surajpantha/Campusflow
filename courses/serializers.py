@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import Course, Enrollment
 
 class CourseSerializer(serializers.ModelSerializer):
+    teacher_username=serializers.CharField(
+        source="teacher.username",
+        read_only=True,
+    )
 
     class Meta:
         model = Course
@@ -10,15 +14,20 @@ class CourseSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "teacher",
+            "teacher_username",
             "created_at",
             "is_active",
         ]
 
-        read_only_fields = ["id", "teacher", "created_at"]
+        read_only_fields = ["id", "teacher", "created_at","teacher_username"]
 
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
+    course_details=CourseSerializer(
+        source="course",
+        read_only=True,
+    )
 
     class Meta:
         model = Enrollment
@@ -26,9 +35,10 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             "id",
             "student",
             "course",
+            "course_details",
             "enrolled_at",
         ]
-        read_only_fields = ["id", "student", "enrolled_at"]
+        read_only_fields = ["id", "student", "enrolled_at","course_details"]
         validators = []
 
     def validate_course(self, value):

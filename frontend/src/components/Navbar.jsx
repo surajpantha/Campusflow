@@ -2,6 +2,8 @@ import { NavLink } from 'react-router';
 import {
     LayoutDashboard,
     ClipboardList,
+    BookOpen,
+    Library,
 } from 'lucide-react';
 
 const navigationByRole = {
@@ -16,6 +18,16 @@ const navigationByRole = {
             label: 'Assignments',
             path: '/assignments',
             icon: ClipboardList,
+        },
+        {
+            label: 'Course Catalogue',
+            path: '/courses',
+            icon: BookOpen,
+        },
+        {
+            label: 'My Courses',
+            path: '/my-courses',
+            icon: Library,
         },
     ],
 
@@ -41,7 +53,7 @@ function Navbar({ role }) {
 
     return (
         <nav className="flex flex-col gap-2">
-            {navigation.map((item) => {
+            {navigation.map(item => {
                 const Icon = item.icon;
 
                 return (

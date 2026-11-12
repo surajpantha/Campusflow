@@ -6,24 +6,24 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
 import TeacherDashboard from './pages/TeacherDashboard';
+import CourseCatalogue from './pages/CourseCatalogue';
+import MyCourses from './pages/MyCourses';
 
 import DashboardLayout from './layouts/Dashboardlayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import GuestRoute from './components/GuestRoute';
 
 import { AssignmentProvider } from './context/AssignmentProvider';
+import { StudentCourseProvider } from './context/StudentCourseProvider';
 
 function App() {
     return (
         <Routes>
-
-            {/* Guest-only routes */}
             <Route element={<GuestRoute />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
             </Route>
 
-            {/* Public route */}
             <Route
                 path="/unauthorized"
                 element={<Unauthorized />}
@@ -35,29 +35,25 @@ function App() {
                     path="/"
                     element={
                         <AssignmentProvider>
-                            <DashboardLayout />
+                            <StudentCourseProvider>
+                                <DashboardLayout />
+                            </StudentCourseProvider>
                         </AssignmentProvider>
                     }
                 >
                     <Route index element={<Dashboard />} />
-
-                    <Route
-                        path="assignments"
-                        element={<Assignments />}
-                    />
+                    <Route path="assignments" element={<Assignments />} />
+                    <Route path="courses" element={<CourseCatalogue />} />
+                    <Route path="my-courses" element={<MyCourses />} />
                 </Route>
             </Route>
 
             {/* Teacher routes */}
             <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-                <Route
-                    path="/teacher"
-                    element={<DashboardLayout />}
-                >
+                <Route path="/teacher" element={<DashboardLayout />}>
                     <Route index element={<TeacherDashboard />} />
                 </Route>
             </Route>
-
         </Routes>
     );
 }
