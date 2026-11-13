@@ -52,3 +52,24 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.course.title}"
+
+
+
+class CourseMaterial(models.Model):
+    course=models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="materials",
+    )
+
+    title=models.CharField(max_length=200)
+    description=models.TextField(blank=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    updated_at=models.DateTimeField(auto_now=True)
+    is_published=models.BooleanField(default=True)
+
+    class Meta:
+        ordering=["-created_at"]
+
+    def __str__(self):
+        return f"{self.title}--{self.course.title}"

@@ -1,9 +1,11 @@
 from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import (
     CourseViewSet,
     EnrollmentViewSet,
     AvailableCourseViewSet,
     CourseAccessViewSet,
+    CourseMaterialViewSet
 )
 
 router = DefaultRouter()
@@ -28,4 +30,24 @@ router.register(
     CourseAccessViewSet,
     basename="course-access",
 )
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path(
+        "courses/<int:course_pk>/materials/",
+        CourseMaterialViewSet.as_view({
+            "get": "list",
+            "post": "create",
+        }),
+        name="course-material-list",
+    ),
+
+    path(
+        "courses/<int:course_pk>/materials/<int:pk>/",
+        CourseMaterialViewSet.as_view({
+            "get": "retrieve",
+            "patch": "partial_update",
+            "put": "update",
+            "delete": "destroy",
+        }),
+        name="course-material-detail",
+    ),
+]

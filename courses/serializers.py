@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Enrollment
+from .models import Course, Enrollment, CourseMaterial
 
 class CourseSerializer(serializers.ModelSerializer):
     teacher_username=serializers.CharField(
@@ -60,3 +60,30 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+
+class CourseMaterialSerializer(serializers.ModelSerializer):
+    course_title=serializers.CharField(
+        source="course.title",
+        read_only=True,
+    )
+
+    class Meta:
+        model=CourseMaterial
+        fields=[
+            "id",
+            "course",
+            "course_title",
+            "title",
+            "description",
+            "created_at",
+            "updated_at",
+            "is_published",
+        ]
+        read_only_fields = [
+            "id",
+            "course",
+            "course_title",
+            "created_at",
+            "updated_at",
+        ]
