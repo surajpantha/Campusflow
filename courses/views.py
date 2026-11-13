@@ -3,6 +3,7 @@ from rest_framework import viewsets, mixins
 from .models import Course, Enrollment
 from .serializers import CourseSerializer, EnrollmentSerializer
 from accounts.permissions import IsTeacher, IsStudent
+from django.db.models import Q
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class=CourseSerializer
@@ -44,3 +45,20 @@ class AvailableCourseViewSet(
 
     def get_queryset(self):
         return Course.objects.filter(is_active=True)
+
+
+class CourseAccessViewSet(
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    serializer_class=CourseSerializer
+    permission_classes=[IsAuthenticated]
+
+    def get_queryset(self):
+        user=self.request.user
+
+
+        return Course.objects.filter(
+            Q(teacher=user)|
+            Q(enrollments__student=user)
+        ).select_related("teacher").distinct()

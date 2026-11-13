@@ -15,6 +15,7 @@ import GuestRoute from './components/GuestRoute';
 
 import { AssignmentProvider } from './context/AssignmentProvider';
 import { StudentCourseProvider } from './context/StudentCourseProvider';
+import CourseDetail from "./pages/CourseDetail";
 
 function App() {
     return (
@@ -44,6 +45,7 @@ function App() {
                     <Route index element={<Dashboard />} />
                     <Route path="assignments" element={<Assignments />} />
                     <Route path="courses" element={<CourseCatalogue />} />
+                    <Route path="courses/:courseId" element={<CourseDetail />} />
                     <Route path="my-courses" element={<MyCourses />} />
                 </Route>
             </Route>

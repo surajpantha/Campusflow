@@ -1,26 +1,27 @@
 import { useState } from "react";
 import { useStudentCourses } from "../hooks/useStudentCourse";
+import { Link } from "react-router";
 
 
-function MyCourses(){
-    const{
+function MyCourses() {
+    const {
         enrollments,
         loading,
         error,
         leaveCourse,
-    }=useStudentCourses();
+    } = useStudentCourses();
 
 
-    const[leavingEnrollmentId,setLeavingEnrollmentId]=useState(null);
-    const[actionError,setActionError]=useState(null);
+    const [leavingEnrollmentId, setLeavingEnrollmentId] = useState(null);
+    const [actionError, setActionError] = useState(null);
 
-    async  function handleLeave(enrollment){
-        const confirmed=window.confirm(
+    async function handleLeave(enrollment) {
+        const confirmed = window.confirm(
             `Are you sure you want to leave "${enrollment.course_details.title}"?`
         );
 
-        if(!confirmed) return;
-        
+        if (!confirmed) return;
+
 
         try {
             setLeavingEnrollmentId(enrollment.id);
@@ -31,11 +32,11 @@ function MyCourses(){
         } catch (err) {
             setActionError(err.message);
 
-        }finally{
+        } finally {
             setLeavingEnrollmentId(null);
         }
     }
-if (loading) {
+    if (loading) {
         return <p className="py-10 text-center text-slate-500">
             Loading your courses...
         </p>;
@@ -83,17 +84,26 @@ if (loading) {
                                 key={enrollment.id}
                                 className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
                             >
-                                <h2 className="text-lg font-bold text-slate-900">
-                                    {course.title}
-                                </h2>
+                                <Link
+                                    to={`/courses/${course.id}`}
+                                    className="block rounded-lg transition hover:opacity-80"
+                                >
+                                    <h2 className="text-lg font-bold text-slate-900">
+                                        {course.title}
+                                    </h2>
 
-                                <p className="mt-2 text-sm text-slate-500">
-                                    {course.description || 'No description provided.'}
-                                </p>
+                                    <p className="mt-2 text-sm text-slate-500">
+                                        {course.description || "No description provided."}
+                                    </p>
 
-                                <p className="mt-4 text-sm text-slate-500">
-                                    Teacher: {course.teacher_username}
-                                </p>
+                                    <p className="mt-4 text-sm text-slate-500">
+                                        Teacher: {course.teacher_username}
+                                    </p>
+
+                                    <p className="mt-3 text-sm font-medium text-indigo-600">
+                                        Open Course →
+                                    </p>
+                                </Link>
 
                                 <p className="mt-2 text-xs text-slate-400">
                                     Enrolled: {new Date(

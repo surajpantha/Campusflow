@@ -1,5 +1,10 @@
 from rest_framework.routers import DefaultRouter
-from .views import CourseViewSet,EnrollmentViewSet,AvailableCourseViewSet
+from .views import (
+    CourseViewSet,
+    EnrollmentViewSet,
+    AvailableCourseViewSet,
+    CourseAccessViewSet,
+)
 
 router = DefaultRouter()
 
@@ -17,5 +22,10 @@ router.register(
     r'available-courses',
     AvailableCourseViewSet,
     basename='available-courses'
+)
+router.register(
+    r"course-access",
+    CourseAccessViewSet,
+    basename="course-access",
 )
 urlpatterns = router.urls
