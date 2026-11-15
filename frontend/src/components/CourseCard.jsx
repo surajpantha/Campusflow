@@ -1,4 +1,6 @@
 
+import { Link } from 'react-router';
+
 function CourseCard({
     course,
     onEdit,
@@ -30,6 +32,13 @@ function CourseCard({
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                <Link
+                    to={`/teacher/courses/${course.id}/materials`}
+                    className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                    Manage Materials
+                </Link>
+
                 <button
                     type="button"
                     onClick={() => onEdit(course)}

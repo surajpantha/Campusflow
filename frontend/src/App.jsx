@@ -16,6 +16,7 @@ import GuestRoute from './components/GuestRoute';
 import { AssignmentProvider } from './context/AssignmentProvider';
 import { StudentCourseProvider } from './context/StudentCourseProvider';
 import CourseDetail from "./pages/CourseDetail";
+import TeacherCourseMaterials from './pages/TeacherCourseMaterials';
 
 function App() {
     return (
@@ -54,6 +55,10 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
                 <Route path="/teacher" element={<DashboardLayout />}>
                     <Route index element={<TeacherDashboard />} />
+                    <Route
+                        path="courses/:courseId/materials"
+                        element={<TeacherCourseMaterials />}
+                    />
                 </Route>
             </Route>
         </Routes>

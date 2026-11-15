@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from courses.models import Course, Enrollment
+from courses.models import Course, Enrollment,CourseMaterial
 
 User = get_user_model()
 
@@ -217,3 +217,229 @@ class EnrollmentAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class CourseMaterialAPITests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create users
+        self.teacher = User.objects.create_user(
+            username="teacher1",
+            email="teacher1@example.com",
+            password="TestPass123!",
+            role=User.Role.TEACHER,
+        )
+
+        self.other_teacher = User.objects.create_user(
+            username="teacher2",
+            email="teacher2@example.com",
+            password="TestPass123!",
+            role=User.Role.TEACHER,
+        )
+
+        self.student = User.objects.create_user(
+            username="student1",
+            email="student1@example.com",
+            password="TestPass123!",
+        )
+
+        self.unenrolled_student = User.objects.create_user(
+            username="student2",
+            email="student2@example.com",
+            password="TestPass123!",
+        )
+
+        # Create courses
+        self.course = Course.objects.create(
+            title="Django Backend",
+            teacher=self.teacher,
+        )
+
+        self.other_course = Course.objects.create(
+            title="React Development",
+            teacher=self.other_teacher,
+        )
+
+        # Enroll the student in the teacher's course
+        Enrollment.objects.create(
+            student=self.student,
+            course=self.course,
+        )
+
+        # Create materials
+        self.published_material = CourseMaterial.objects.create(
+            course=self.course,
+            title="Introduction to Django",
+            description="Django fundamentals",
+            is_published=True,
+        )
+
+        self.unpublished_material = CourseMaterial.objects.create(
+            course=self.course,
+            title="Advanced Django Notes",
+            description="Coming soon",
+            is_published=False,
+        )
+
+        self.other_material = CourseMaterial.objects.create(
+            course=self.other_course,
+            title="React Fundamentals",
+        )
+
+        # URLs
+        self.list_url = reverse(
+            "course-material-list",
+            kwargs={"course_pk": self.course.id},
+        )
+
+        self.detail_url = reverse(
+            "course-material-detail",
+            kwargs={
+                "course_pk": self.course.id,
+                "pk": self.published_material.id,
+            },
+        )
+
+    # -------------------------
+    # Teacher permissions
+    # -------------------------
+
+    def test_teacher_can_list_own_course_materials(self):
+        self.client.force_authenticate(user=self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        returned_ids = [item["id"] for item in response.data]
+
+        self.assertIn(self.published_material.id, returned_ids)
+        self.assertIn(self.unpublished_material.id, returned_ids)
+
+    def test_teacher_can_create_course_material(self):
+        self.client.force_authenticate(user=self.teacher)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "title": "Django REST Framework",
+                "description": "Building APIs with DRF",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        material = CourseMaterial.objects.get(
+            title="Django REST Framework"
+        )
+
+        self.assertEqual(material.course, self.course)
+
+    def test_teacher_can_update_own_course_material(self):
+        self.client.force_authenticate(user=self.teacher)
+
+        response = self.client.patch(
+            self.detail_url,
+            {"title": "Updated Django Notes"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.published_material.refresh_from_db()
+
+        self.assertEqual(
+            self.published_material.title,
+            "Updated Django Notes",
+        )
+
+    def test_teacher_can_delete_own_course_material(self):
+        self.client.force_authenticate(user=self.teacher)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertFalse(
+            CourseMaterial.objects.filter(
+                id=self.published_material.id
+            ).exists()
+        )
+
+    def test_teacher_cannot_access_another_teachers_materials(self):
+        self.client.force_authenticate(user=self.teacher)
+
+        other_course_url = reverse(
+            "course-material-list",
+            kwargs={"course_pk": self.other_course.id},
+        )
+
+        response = self.client.get(other_course_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # -------------------------
+    # Student permissions
+    # -------------------------
+
+    def test_enrolled_student_can_view_published_materials(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        returned_ids = [item["id"] for item in response.data]
+
+        self.assertIn(self.published_material.id, returned_ids)
+        self.assertNotIn(self.unpublished_material.id, returned_ids)
+
+    def test_student_cannot_retrieve_unpublished_material(self):
+        self.client.force_authenticate(user=self.student)
+
+        unpublished_url = reverse(
+            "course-material-detail",
+            kwargs={
+                "course_pk": self.course.id,
+                "pk": self.unpublished_material.id,
+            },
+        )
+
+        response = self.client.get(unpublished_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_unenrolled_student_cannot_view_course_materials(self):
+        self.client.force_authenticate(user=self.unenrolled_student)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_student_cannot_create_course_material(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.post(
+            self.list_url,
+            {"title": "Unauthorized Material"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_student_cannot_update_course_material(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.patch(
+            self.detail_url,
+            {"title": "Unauthorized Update"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_student_cannot_delete_course_material(self):
+        self.client.force_authenticate(user=self.student)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

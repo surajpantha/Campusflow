@@ -109,7 +109,7 @@ class CourseMaterialViewSet(
         if self.request.user.role=="student":
             materials=materials.filter(is_published=True)
 
-            return materials
+        return materials
 
     def perform_create(self, serializer):
         course=self.get_course()

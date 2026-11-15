@@ -1,3 +1,5 @@
+
+
 function StudentCourseCard({
     course,
     enrolled,

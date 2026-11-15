@@ -7,6 +7,8 @@ function CourseDetail() {
     const { courseId } = useParams();
 
     const [course, setCourse] = useState(null);
+    const [materials, setMaterials] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -15,19 +17,21 @@ function CourseDetail() {
         let isActive = true;
 
 
-        async function fetchCourse() {
+        async function fetchCourseData() {
             setLoading(true);
             setError(null);
             setCourse(null);
+            setMaterials([]);
 
             try {
-                const data = await api.get(
-                    `/course-access/${courseId}`
-                );
+                const [courseData, materialData] = await Promise.all([
+                    api.get(`/course-access/${courseId}/`),
+                    api.get(`/courses/${courseId}/materials/`),
+                ]);
 
                 if (isActive) {
-                    setCourse(data);
-
+                    setCourse(courseData);
+                    setMaterials(materialData);
                 }
             } catch (err) {
                 if (isActive) {
@@ -41,14 +45,14 @@ function CourseDetail() {
             }
         }
 
-        fetchCourse();
+        fetchCourseData();
 
         return () => {
             isActive = false;
         };
     }, [courseId])
-    
-    if (loading) {
+
+   if (loading) {
         return (
             <p className="py-10 text-center text-slate-500">
                 Loading course...
@@ -86,6 +90,7 @@ function CourseDetail() {
                 ← Back to My Courses
             </Link>
 
+            {/* Course information */}
             <header className="rounded-2xl bg-white p-8 shadow-sm">
                 <p className="text-sm font-medium text-indigo-600">
                     COURSE LEARNING SPACE
@@ -110,14 +115,62 @@ function CourseDetail() {
                 </div>
             </header>
 
-            <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8">
-                <h2 className="text-xl font-bold text-slate-900">
-                    Learning Materials
-                </h2>
+            {/* Learning materials */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-900">
+                        Learning Materials
+                    </h2>
 
-                <p className="mt-2 text-slate-500">
-                    Your teacher's learning materials will appear here.
-                </p>
+                    <span className="text-sm text-slate-500">
+                        {materials.length} available
+                    </span>
+                </div>
+
+                {materials.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+                        <h3 className="font-semibold text-slate-900">
+                            No learning materials yet
+                        </h3>
+
+                        <p className="mt-2 text-sm text-slate-500">
+                            Your teacher hasn't published any materials for this course yet.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {materials.map((material) => (
+                            <article
+                                key={material.id}
+                                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className="rounded-lg bg-indigo-50 p-3">
+                                        <span className="text-xl">📚</span>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-slate-900">
+                                            {material.title}
+                                        </h3>
+
+                                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                                            {material.description ||
+                                                "No description provided."}
+                                        </p>
+
+                                        <p className="mt-3 text-xs text-slate-400">
+                                            Added on{" "}
+                                            {new Date(
+                                                material.created_at
+                                            ).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
             </section>
         </div>
     );
