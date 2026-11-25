@@ -1,3 +1,10 @@
+import mimetypes
+import os
+
+from django.http import FileResponse
+from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, mixins
 from .models import Course, Enrollment, CourseMaterial
@@ -10,6 +17,11 @@ from accounts.permissions import IsTeacher, IsStudent
 from django.db.models import Q
 from .permissions import CourseMaterialPermission
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import (
+    JSONParser,
+    MultiPartParser,
+    FormParser,
+)
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class=CourseSerializer
@@ -80,6 +92,11 @@ class CourseMaterialViewSet(
 ):
     serializer_class=CourseMaterialSerializer
     permission_classes=[IsAuthenticated,CourseMaterialPermission]
+    parser_classes=[
+        JSONParser,
+        MultiPartParser,
+        FormParser,
+    ]
 
     def get_course(self):
         user=self.request.user
@@ -114,3 +131,38 @@ class CourseMaterialViewSet(
     def perform_create(self, serializer):
         course=self.get_course()
         serializer.save(course=course)
+
+class CourseMaterialDownloadView(APIView):
+    permission_classes=[
+        IsAuthenticated,
+        CourseMaterialPermission,
+    ]
+
+    def get(self,request,course_pk,pk):
+        material=get_object_or_404(
+            CourseMaterial.objects.select_related("course"),
+            pk=pk,
+            course_id=course_pk,
+        )
+
+        # Run the object level authorization checks.
+        self.check_object_permissions(request,material)
+
+        # A material may exist without an attached file.
+        if not material.file:
+            raise NotFound("this material does not have an attached file")
+
+        # Open the file through django's configured storage backend
+
+        file_handle=material.file.open("rb")
+
+        # Determine the response MIME type from the filename.
+        content_type,_=mimetypes.guess_type(material.file.name)
+
+        # stream the file as a download.
+        return FileResponse(
+            file_handle,
+            as_attachment=True,
+            filename=os.path.basename(material.file.name),
+            content_type=content_type or "application/octet-stream",
+        )

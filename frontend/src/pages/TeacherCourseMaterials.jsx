@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { api } from "../services/api";
 
@@ -23,6 +23,9 @@ function TeacherCourseMaterials() {
 
     const [error, setError] = useState(null);
     const [actionError, setActionError] = useState(null);
+
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = useRef(null);
 
     const materialsUrl = `/courses/${courseId}/materials/`;
 
@@ -60,7 +63,7 @@ function TeacherCourseMaterials() {
         return () => {
             isActive = false;
         };
-    }, [courseId,materialsUrl]);
+    }, [courseId, materialsUrl]);
 
     function handleChange(event) {
         const { name, value, type, checked } = event.target;
@@ -71,6 +74,37 @@ function TeacherCourseMaterials() {
         }));
     }
 
+    function handleFileChange(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+
+        const allowedExtensions = [".pdf", ".ppt", ".pptx", ".doc", ".docx"];
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+
+        if (!allowedExtensions.includes(extension)) {
+            setActionError(
+                "Unsupported file type.Please select a pdf,powerpoint or word document."
+            );
+            setSelectedFile(null);
+            event.target.value = "";
+            return;
+        }
+
+
+        if (file.size > 10 * 1024 * 1024) {
+            setActionError("File size cannot exceed 10 MB.");
+            setSelectedFile(null);
+            event.target.value = "";
+            return;
+        }
+
+        setSelectedFile(file);
+        setActionError(null);
+
+    }
+
+
     function startEditing(material) {
         setEditingMaterial(material);
 
@@ -79,13 +113,23 @@ function TeacherCourseMaterials() {
             description: material.description,
             is_published: material.is_published,
         });
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
 
+        }
         setActionError(null);
     }
 
     function cancelEditing() {
         setEditingMaterial(null);
         setFormData(initialForm);
+        setSelectedFile(null);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+
         setActionError(null);
     }
 
@@ -95,13 +139,24 @@ function TeacherCourseMaterials() {
         try {
             setSaving(true);
             setActionError(null);
+            // CREATE A multipart/form-data payload
+            const payload = new FormData();
+
+            payload.append("title", formData.title);
+            payload.append("description", formData.description);
+            payload.append("is_published", String(formData.is_published));
+            // Only attach a file if the teacher selected one.
+            if (selectedFile) {
+                payload.append("file", selectedFile);
+            }
+
 
             let savedMaterial;
 
             if (editingMaterial) {
                 savedMaterial = await api.patch(
                     `${materialsUrl}${editingMaterial.id}/`,
-                    formData
+                    payload
                 );
 
                 setMaterials((previous) =>
@@ -112,7 +167,7 @@ function TeacherCourseMaterials() {
                     )
                 );
             } else {
-                savedMaterial = await api.post(materialsUrl, formData);
+                savedMaterial = await api.post(materialsUrl, payload);
 
                 setMaterials((previous) => [
                     savedMaterial,
@@ -184,6 +239,13 @@ function TeacherCourseMaterials() {
         } catch (err) {
             setActionError(err.message);
         }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
 
     if (loading) {
@@ -282,7 +344,63 @@ function TeacherCourseMaterials() {
                             className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                         />
                     </div>
+                    <div>
+                        <label
+                            htmlFor="material-file"
+                            className="mb-2 block text-sm font-medium text-slate-700"
+                        >
+                            Attachment
+                        </label>
 
+                        <input
+                            ref={fileInputRef}
+                            id="material-file"
+                            type="file"
+                            accept=".pdf,.ppt,.pptx,.doc,.docx"
+                            onChange={handleFileChange}
+                            className="w-full rounded-lg border border-slate-300 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+                        />
+
+                        <p className="mt-2 text-xs text-slate-500">
+                            Supported formats: PDF, PPT, PPTX, DOC, DOCX. Maximum size: 10 MB.
+                        </p>
+
+                        {selectedFile && (
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-indigo-50 p-3">
+                                <div className="text-sm">
+                                    <p className="font-medium text-indigo-900">
+                                        {selectedFile.name}
+                                    </p>
+
+                                    <p className="text-xs text-indigo-700">
+                                        {formatFileSize(selectedFile.size)}
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedFile(null);
+
+                                        if (fileInputRef.current) {
+                                            fileInputRef.current.value = "";
+                                        }
+                                    }}
+                                    className="text-sm font-medium text-red-600 hover:underline"
+                                >
+                                    Remove selection
+                                </button>
+                            </div>
+                        )}
+
+                        {editingMaterial && !selectedFile && (
+                            <p className="mt-3 text-sm text-slate-600">
+                                {editingMaterial.has_file
+                                    ? "An attachment is already uploaded. Select a new file only if you want to replace it."
+                                    : "This material currently has no attachment."}
+                            </p>
+                        )}
+                    </div>
                     <label className="flex items-center gap-3 text-sm text-slate-700">
                         <input
                             type="checkbox"
@@ -365,14 +483,18 @@ function TeacherCourseMaterials() {
                                         <p className="mt-2 text-sm text-slate-500">
                                             {material.description || "No description provided."}
                                         </p>
+                                        <p className="mt-2 text-xs font-medium text-slate-500">
+                                            {material.has_file
+                                                ? "📎 Attachment available"
+                                                : "No attachment"}
+                                        </p>
                                     </div>
 
                                     <span
-                                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                            material.is_published
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-amber-100 text-amber-700"
-                                        }`}
+                                        className={`rounded-full px-3 py-1 text-xs font-medium ${material.is_published
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-amber-100 text-amber-700"
+                                            }`}
                                     >
                                         {material.is_published
                                             ? "Published"

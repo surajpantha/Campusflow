@@ -85,19 +85,32 @@ async function apiRequest(endpoint, options = {}, retry = true) {
     const requestHeaders = {
         ...headers,
     };
-    if (body !== undefined) {
-        requestHeaders['Content-Type'] = 'application/json';
+    // Detect whether the request is FormData
+    const isFormData = body instanceof FormData;
+    // JSON requests need this header.
+    // FormData requests must NOT set it manually.
+    if (body !== undefined && !isFormData) {
+        requestHeaders["Content-Type"] = "application/json";
     }
     const access = getAccessToken();
     if (access) {
         requestHeaders.Authorization = `Bearer ${access}`
     }
 
+    // Preserve Formdata;JSON-stringify ordinary Javascript objects.
+
+    const requestBody =
+        body === undefined
+            ? undefined
+            : isFormData
+                ? body
+                : JSON.stringify(body);
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`,
         {
             ...otherOptions,
             headers: requestHeaders,
-            body: body === undefined ? undefined : JSON.stringify(body),
+            body: requestBody,
         });
 
     //    if access token expired,refresh and retry once
@@ -142,6 +155,81 @@ export const api = {
 
     delete: (endpoint) =>
         apiRequest(endpoint, { method: 'DELETE' }),
+    download: (endpoint) => apiDownload(endpoint),
 
 };
 
+function getDownloadFilename(disposition) {
+    if (!disposition) return "Download";
+
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+
+    if (utf8Match) {
+        try {
+            return decodeURIComponent(utf8Match[1]);
+
+        } catch {
+            // Fall through to the regular filename.
+        }
+    }
+
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+
+    return match?.[1] || "download";
+
+}
+
+// Handles authenticated file downloads.
+
+async function apiDownload(endpoint, retry = true) {
+    const headers = {};
+    const access = getAccessToken();
+
+    if (access) {
+        headers.Authorization = `Bearer ${access}`;
+
+    }
+
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "GET",
+        headers,
+    });
+
+
+    //   Reuse the shared refresh operation if the access token expired.
+
+    if (
+        response.status === 401 &&
+        retry &&
+        getRefreshToken()
+    ) {
+        const refreshed = await refreshAccessToken();
+
+        if (refreshed) {
+            return apiDownload(endpoint, false);
+
+        }
+        clearTokens();
+
+    }
+    if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const error = new Error(
+            data?.detail ||
+            "Unable to download this file"
+        );
+        error.status = response.status;
+        error.data = data;
+
+        throw error;
+    }
+
+    const blob = await response.blob();
+    return {
+        blob,
+        filename: getDownloadFilename(
+            response.headers.get("Content-Disposition")
+        ),
+    };
+}

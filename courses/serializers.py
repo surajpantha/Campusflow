@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Course, Enrollment, CourseMaterial
+from pathlib import Path
 
 class CourseSerializer(serializers.ModelSerializer):
     teacher_username=serializers.CharField(
@@ -67,7 +68,13 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
         source="course.title",
         read_only=True,
     )
+    file=serializers.FileField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
 
+    has_file=serializers.SerializerMethodField()
     class Meta:
         model=CourseMaterial
         fields=[
@@ -76,6 +83,8 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
             "course_title",
             "title",
             "description",
+            "file",
+            "has_file",
             "created_at",
             "updated_at",
             "is_published",
@@ -87,3 +96,32 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+    def get_has_file(self, obj):
+     return bool(obj.file)
+
+
+    def validate_file(self,file):
+        allowed_extensions={
+        ".pdf",
+        ".ppt",
+        ".pptx",
+        ".doc",
+        ".docx",
+
+        }
+
+        extension=Path(file.name).suffix.lower()
+
+        if extension not in allowed_extensions:
+            raise serializers.ValidationError(
+                "Unsupported file type. Upload PDF, Powerpoint, or WOrd documents.")
+        max_size=10*1024*1024*1024 #10MB
+
+
+        if file.size>max_size:
+            raise serializers.ValidationError(
+                "FIle size cannot excced 10 mb."
+            )
+
+
+        return file

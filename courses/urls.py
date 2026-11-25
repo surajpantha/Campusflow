@@ -5,7 +5,8 @@ from .views import (
     EnrollmentViewSet,
     AvailableCourseViewSet,
     CourseAccessViewSet,
-    CourseMaterialViewSet
+    CourseMaterialViewSet,
+    CourseMaterialDownloadView,
 )
 
 router = DefaultRouter()
@@ -50,4 +51,9 @@ urlpatterns = router.urls + [
         }),
         name="course-material-detail",
     ),
+    path(
+    "courses/<int:course_pk>/materials/<int:pk>/download/",
+    CourseMaterialDownloadView.as_view(),
+    name="course-material-download",
+),
 ]

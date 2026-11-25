@@ -12,6 +12,10 @@ function CourseDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [downloadingId, setDownloadingId] = useState(null);
+    const [downloadError, setDownloadError] = useState(null);
+
+
 
     useEffect(() => {
         let isActive = true;
@@ -50,9 +54,48 @@ function CourseDetail() {
         return () => {
             isActive = false;
         };
-    }, [courseId])
+    }, [courseId]);
 
-   if (loading) {
+    async function handleDownload(material) {
+        setDownloadingId(material.id);
+        setDownloadError(null);
+
+        let objectUrl = null;
+
+
+        try {
+            const { blob, filename } = await api.download(
+                `/courses/${courseId}/materials/${materials.id}/download/`
+            );
+
+
+            objectUrl = URL.createObjectURL(blob);
+
+            const link = objectUrl;
+            link.href = objectUrl;
+            link.download = filename;
+
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+        } catch (err) {
+            setDownloadError(err.message);
+
+        } finally {
+            if (objectUrl) {
+                // Give the browser time to start the download.
+                window.setTimeout(() => {
+                    URL.revokeObjectURL(objectUrl);
+
+                }, 1000);
+            }
+            setDownloadingId(null);
+        }
+    }
+
+    if (loading) {
         return (
             <p className="py-10 text-center text-slate-500">
                 Loading course...
@@ -127,6 +170,15 @@ function CourseDetail() {
                     </span>
                 </div>
 
+                {downloadError && (
+                    <p
+                        role="alert"
+                        className="rounded-lg bg-red-50 p-4 text-sm text-red-700"
+                    >
+                        {downloadError}
+                    </p>
+                )}
+
                 {materials.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
                         <h3 className="font-semibold text-slate-900">
@@ -144,28 +196,49 @@ function CourseDetail() {
                                 key={material.id}
                                 className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
                             >
-                                <div className="flex items-start gap-4">
-                                    <div className="rounded-lg bg-indigo-50 p-3">
-                                        <span className="text-xl">📚</span>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                    <div className="flex min-w-0 flex-1 items-start gap-4">
+                                        <div className="rounded-lg bg-indigo-50 p-3">
+                                            <span className="text-xl">
+                                                📚
+                                            </span>
+                                        </div>
+
+                                        <div className="min-w-0">
+                                            <h3 className="font-semibold text-slate-900">
+                                                {material.title}
+                                            </h3>
+
+                                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                                                {material.description ||
+                                                    "No description provided."}
+                                            </p>
+
+                                            <p className="mt-3 text-xs text-slate-400">
+                                                Added on{" "}
+                                                {new Date(
+                                                    material.created_at
+                                                ).toLocaleDateString()}
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="font-semibold text-slate-900">
-                                            {material.title}
-                                        </h3>
-
-                                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                                            {material.description ||
-                                                "No description provided."}
-                                        </p>
-
-                                        <p className="mt-3 text-xs text-slate-400">
-                                            Added on{" "}
-                                            {new Date(
-                                                material.created_at
-                                            ).toLocaleDateString()}
-                                        </p>
-                                    </div>
+                                    {material.has_file ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDownload(material)}
+                                            disabled={downloadingId !== null}
+                                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {downloadingId === material.id
+                                                ? "Downloading..."
+                                                : "Download"}
+                                        </button>
+                                    ) : (
+                                        <span className="shrink-0 text-sm text-slate-400">
+                                            No file attached
+                                        </span>
+                                    )}
                                 </div>
                             </article>
                         ))}
